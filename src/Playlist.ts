@@ -48,10 +48,5 @@ get playlist
 analyze playlist
     - bpm profile
     - genre profile
-    
-
-
-
-
 
 */
