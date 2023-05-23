@@ -41,12 +41,3 @@ export const fetchPlaylist = async (playlist: string): Promise<Playlist> => {
         .select(...LibData.map(colName => col(lib, colName)), col(tracks, 'position'))
         .where(col(playlists, 'name'), playlist)
 }
-
-/*
-get playlist
-
-analyze playlist
-    - bpm profile
-    - genre profile
-
-*/

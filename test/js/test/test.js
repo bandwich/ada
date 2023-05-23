@@ -1,6 +1,4 @@
 "use strict";
-// sqlite db
-// ~/Library/Containers/org.mixxx.mixxx/Data/Library/Application Support/Mixxx
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -37,41 +35,34 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from));
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fetchPlaylist = void 0;
-var knex_1 = require("knex");
-var knex = (0, knex_1.default)({
-    client: 'better-sqlite3',
-    connection: { filename: 'mixxxdb.sqlite' },
-    useNullAsDefault: true
-});
-var col = function (table, column) { return table.concat('.' + column); };
-var playlists = 'playlists';
-var tracks = 'playlisttracks';
-var lib = 'library';
-var LibData = [
-    'id', 'title', 'artist', 'album', 'year', 'genre',
-    'tracknumber', 'location', 'duration', 'bpm', 'wavesummaryhex'
-];
-var fetchPlaylist = function (playlist) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
-            case 0: return [4 /*yield*/, (_a = knex(tracks)
-                    .join(playlists, col(tracks, 'playlist_id'), col(playlists, 'id'))
-                    .join(lib, col(tracks, 'track_id'), col(lib, 'id')))
-                    .select.apply(_a, __spreadArray(__spreadArray([], LibData.map(function (colName) { return col(lib, colName); }), false), [col(tracks, 'position')], false)).where(col(playlists, 'name'), playlist)];
-            case 1: return [2 /*return*/, _b.sent()];
-        }
+var Playlist_js_1 = require("../src/Playlist.js");
+var getPlaylist = function (p) { return __awaiter(void 0, void 0, void 0, function () { return __generator(this, function (_a) {
+    switch (_a.label) {
+        case 0: return [4 /*yield*/, (0, Playlist_js_1.fetchPlaylist)(p)];
+        case 1: return [2 /*return*/, _a.sent()];
+    }
+}); }); };
+var expect = require('chai').expect;
+describe('Playlist format', function () {
+    return __awaiter(this, void 0, void 0, function () {
+        var playlist;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, getPlaylist('2023-05 Latin')];
+                case 1:
+                    playlist = _a.sent();
+                    console.log(playlist);
+                    it('1. Type of playlist', function (done) {
+                        expect(playlist.length).to.not.equal(0);
+                        done();
+                    });
+                    it('2. Length of playlist greater than zero', function (done) {
+                        expect(Array.isArray(playlist)).to.equal(true);
+                        done();
+                    });
+                    return [2 /*return*/];
+            }
+        });
     });
-}); };
-exports.fetchPlaylist = fetchPlaylist;
+});

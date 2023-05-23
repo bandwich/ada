@@ -1,4 +1,4 @@
-/* 
+/*
 Ada + Mixxx
 5/11/23
 
@@ -43,3 +43,23 @@ const playlist = async (p: string) => {
     return await fetchPlaylist(p)
 }
 playlist('2023-05 Latin')
+
+/*
+get playlist
+
+analyze playlist
+    - bpm profile
+    - genre profile
+
+select first track
+
+start loop
+    - determine next track
+    - determine mix out and mix in points
+    - determine transition
+    - transition -> timed actions -> midi
+
+last track
+    - fadeout
+
+*/

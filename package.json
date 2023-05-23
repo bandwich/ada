@@ -7,10 +7,15 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "node": "node src/js/Ada.js",
-    "tsc": "tsc src/*.ts --outDir src/js"
+    "tsc": "tsc src/*.ts --outDir src/js && tsc test/*.ts --outDir test/js",
+    "test": "mocha test/js/test/test.js"
   },
   "devDependencies": {
+    "@types/chai": "^4.3.5",
+    "@types/mocha": "^10.0.1",
     "@types/node": "^20.1.1",
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
     "typescript": "^5.0.4",
     "vite": "^4.3.2"
   },
