@@ -52,7 +52,6 @@ describe('Playlist format', function () {
                 case 0: return [4 /*yield*/, getPlaylist('2023-05 Latin')];
                 case 1:
                     playlist = _a.sent();
-                    console.log(playlist);
                     it('1. Type of playlist', function (done) {
                         expect(playlist.length).to.not.equal(0);
                         done();
