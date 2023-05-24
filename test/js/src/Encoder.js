@@ -53,7 +53,8 @@ exports.init = void 0;
     XML file matches on status and midino (controller number) - bytes 1 and 2
 */
 var midi_1 = require("@julusian/midi");
-var ActiveMIDISignals = {};
+var MIDISignalsOut = {};
+var MIDISignalsIn = {};
 var MidiOut = {
     cancelNudgeMasterGain: function () { return [0x80, 0, 0]; },
     cancelNudgeLevel: function (deck) { return [0x81, deck, 0]; },
@@ -79,56 +80,11 @@ var MidiOut = {
     nudgeHiEQ: function (deck, val) { return [0xb2, deck, val]; },
     nudgeMidEQ: function (deck, val) { return [0xb3, deck, val]; },
     nudgeLoEQ: function (deck, val) { return [0xb4, deck, val]; },
-    nudgeTempo: function (deck, val) { return [0xb5, deck, val]; }
+    nudgeTempo: function (deck, val) { return [0xb5, deck, val]; },
     // add eq kill methods
 };
 var _statusByte = function (message) {
     return message[0];
-};
-var setupConnections = function (input, output) {
-    input.openPort(0);
-    input.on('message', function (deltaTime, message) {
-        var status = _statusByte(message).toString();
-        ActiveMIDISignals[status] = false;
-    });
-    output.openPort(0);
-};
-var closePorts = function (input, output) {
-    input.closePort();
-    output.closePort();
-};
-var init = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var vIn, vOut, e_1;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                vIn = new midi_1.Input();
-                vOut = new midi_1.Output();
-                setupConnections(vIn, vOut);
-                _a.label = 1;
-            case 1:
-                _a.trys.push([1, 3, , 4]);
-                return [4 /*yield*/, tests(vOut)];
-            case 2:
-                _a.sent();
-                closePorts(vIn, vOut);
-                return [2 /*return*/, ActiveMIDISignals];
-            case 3:
-                e_1 = _a.sent();
-                console.log(e_1);
-                return [3 /*break*/, 4];
-            case 4: return [2 /*return*/, ActiveMIDISignals];
-        }
-    });
-}); };
-exports.init = init;
-var send = function (output, message) {
-    var status = _statusByte(message).toString();
-    if (ActiveMIDISignals[status] === true) {
-        throw new Error('MIDI not received by Mixxx');
-    }
-    output.send(message);
-    ActiveMIDISignals[status] = true;
 };
 var delay = function (ms) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
@@ -138,6 +94,54 @@ var delay = function (ms) { return __awaiter(void 0, void 0, void 0, function ()
         }
     });
 }); };
+var setupConnections = function (input, output) {
+    input.openPort(0);
+    input.on('message', function (deltaTime, message) {
+        var status = _statusByte(message).toString();
+        MIDISignalsIn[status] = true;
+        MIDISignalsOut[status] = true;
+    });
+    output.openPort(0);
+};
+var closePorts = function (input, output) {
+    input.closePort();
+    output.closePort();
+};
+var init = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var vIn, vOut, signals, e_1;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                vIn = new midi_1.Input();
+                vOut = new midi_1.Output();
+                setupConnections(vIn, vOut);
+                signals = [];
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 3, , 4]);
+                return [4 /*yield*/, tests(vOut)];
+            case 2:
+                signals = _a.sent();
+                closePorts(vIn, vOut);
+                return [3 /*break*/, 4];
+            case 3:
+                e_1 = _a.sent();
+                console.log(e_1);
+                return [3 /*break*/, 4];
+            case 4: return [2 /*return*/, signals];
+        }
+    });
+}); };
+exports.init = init;
+var send = function (output, message) {
+    var status = _statusByte(message).toString();
+    if (MIDISignalsOut[status] === false) {
+        throw new Error('MIDI not received by Mixxx');
+    }
+    output.send(message);
+    // true on validation
+    MIDISignalsOut[status] = false;
+};
 var tests = function (output) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -173,18 +177,22 @@ var tests = function (output) { return __awaiter(void 0, void 0, void 0, functio
             case 8:
                 _a.sent();
                 send(output, MidiOut.nudgeHiEQ(0, 2));
-                return [4 /*yield*/, delay(1000)];
+                return [4 /*yield*/, delay(500)];
             case 9:
                 _a.sent();
                 send(output, MidiOut.nudgeHiEQ(0, 3));
-                return [4 /*yield*/, delay(1000)];
+                return [4 /*yield*/, delay(500)];
             case 10:
                 _a.sent();
                 send(output, MidiOut.cancelNudgeHiEQ(0));
-                return [4 /*yield*/, delay(2000)];
+                return [4 /*yield*/, delay(1000)];
             case 11:
                 _a.sent();
-                return [2 /*return*/, delay(0)];
+                send(output, MidiOut.selectTrack(1, 42));
+                return [4 /*yield*/, delay(500)];
+            case 12:
+                _a.sent();
+                return [2 /*return*/, [MIDISignalsOut, MIDISignalsIn]];
         }
     });
 }); };

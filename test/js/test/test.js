@@ -38,6 +38,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var Playlist_js_1 = require("../src/Playlist.js");
 var Encoder_js_1 = require("../src/Encoder.js");
+var dotenv = require("dotenv");
+dotenv.config();
 var expect = require('chai').expect;
 describe('Playlist format', function () {
     it('1. Playlist not empty and of correct type', function () {
@@ -45,7 +47,7 @@ describe('Playlist format', function () {
             var p;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, (0, Playlist_js_1.playlist)('2023-05 Latin')];
+                    case 0: return [4 /*yield*/, (0, Playlist_js_1.playlist)(process.env.defaultPlaylist)];
                     case 1:
                         p = _a.sent();
                         expect(p.length).to.not.equal(0);
@@ -57,16 +59,16 @@ describe('Playlist format', function () {
     });
 });
 describe('MIDI connections', function () {
-    it('2. All MIDI signals were read and processed', function () {
+    it('2. All MIDI signals were read', function () {
         return __awaiter(this, void 0, void 0, function () {
-            var activeSignals, signalSum;
+            var signals, equality;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, (0, Encoder_js_1.init)()];
                     case 1:
-                        activeSignals = _a.sent();
-                        signalSum = Object.values(activeSignals).reduce(function (acc, curr) { return acc && curr; }, false);
-                        expect(signalSum).to.equal(false);
+                        signals = _a.sent();
+                        equality = JSON.stringify(signals[0]) === JSON.stringify(signals[1]);
+                        expect(equality).to.equal(true);
                         return [2 /*return*/];
                 }
             });

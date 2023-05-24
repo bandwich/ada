@@ -18,7 +18,8 @@
 import { Input, MidiMessage, Output } from '@julusian/midi'
 
 interface MIDISignals { [key: string]: boolean }
-const ActiveMIDISignals: MIDISignals = {}
+const MIDISignalsOut: MIDISignals = {}
+const MIDISignalsIn: MIDISignals = {}
 
 const MidiOut = {
     cancelNudgeMasterGain: (): MidiMessage => [0x80, 0, 0],
@@ -48,7 +49,7 @@ const MidiOut = {
     nudgeHiEQ: (deck: number, val: number): MidiMessage => [0xb2, deck, val], 
     nudgeMidEQ: (deck: number, val: number): MidiMessage => [0xb3, deck, val], 
     nudgeLoEQ: (deck: number, val: number): MidiMessage => [0xb4, deck, val], 
-    nudgeTempo: (deck: number, val: number): MidiMessage => [0xb5, deck, val]
+    nudgeTempo: (deck: number, val: number): MidiMessage => [0xb5, deck, val],
 
     // add eq kill methods
 }
@@ -57,11 +58,16 @@ const _statusByte = (message: MidiMessage) => {
     return message[0]
 }
 
+const delay = async (ms: number) => {
+    return await new Promise((resolve) => { setTimeout(resolve, ms) })
+}
+
 const setupConnections = (input: Input, output: Output) => {
     input.openPort(0)
     input.on('message', (deltaTime, message) => {
         const status = _statusByte(message).toString()
-        ActiveMIDISignals[status] = false
+        MIDISignalsIn[status] = true
+        MIDISignalsOut[status] = true
     })
     output.openPort(0)
 }
@@ -71,34 +77,31 @@ const closePorts = (input: Input, output: Output) => {
     output.closePort()
 }
 
-export const init = async (): Promise<MIDISignals> => {
+export const init = async (): Promise<MIDISignals[]> => {
     const vIn = new Input()
     const vOut = new Output()
     setupConnections(vIn, vOut)
+    let signals: MIDISignals[] = []
     try {
-        await tests(vOut)
+        signals = await tests(vOut)
         closePorts(vIn, vOut)
-        return ActiveMIDISignals
     } catch (e) {
         console.log(e)
     }
-    return ActiveMIDISignals
+    return signals
 }
 
 const send = (output: Output, message: MidiMessage) => {
     const status = _statusByte(message).toString()
-    if (ActiveMIDISignals[status] === true) {
+    if (MIDISignalsOut[status] === false) {
         throw new Error('MIDI not received by Mixxx')
     }
     output.send(message)
-    ActiveMIDISignals[status] = true
+    // true on validation
+    MIDISignalsOut[status] = false
 }
 
-const delay = async (ms: number) => {
-    return await new Promise((resolve) => { setTimeout(resolve, ms) })
-}
-
-const tests = async (output: Output): Promise<unknown> => {
+const tests = async (output: Output): Promise<MIDISignals[]> => {
     await delay(1000)
     send(output, MidiOut.selectPlaylist(1))
 
@@ -123,12 +126,15 @@ const tests = async (output: Output): Promise<unknown> => {
     await delay(1000)
     send(output, MidiOut.nudgeHiEQ(0, 2))
 
-    await delay(1000)
+    await delay(500)
     send(output, MidiOut.nudgeHiEQ(0, 3))
 
-    await delay(1000)
+    await delay(500)
     send(output, MidiOut.cancelNudgeHiEQ(0))
 
-    await delay(2000)
-    return delay(0)
+    await delay(1000)
+    send(output, MidiOut.selectTrack(1, 42))
+
+    await delay(500)
+    return [MIDISignalsOut, MIDISignalsIn]
 }
