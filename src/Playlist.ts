@@ -34,10 +34,12 @@ const LibData = [
     'tracknumber', 'location', 'duration', 'bpm', 'wavesummaryhex'
 ]
 
-export const fetchPlaylist = async (playlist: string): Promise<Playlist> => {
+const fetchPlaylist = async (playlist: string): Promise<Playlist> => {
     return await knex(tracks)
         .join(playlists, col(tracks, 'playlist_id'), col(playlists, 'id'))
         .join(lib, col(tracks, 'track_id'), col(lib, 'id'))
         .select(...LibData.map(colName => col(lib, colName)), col(tracks, 'position'))
         .where(col(playlists, 'name'), playlist)
 }
+
+export const playlist = async (p: string) => await fetchPlaylist(p)

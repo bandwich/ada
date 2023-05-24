@@ -37,31 +37,39 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var Playlist_js_1 = require("../src/Playlist.js");
-var getPlaylist = function (p) { return __awaiter(void 0, void 0, void 0, function () { return __generator(this, function (_a) {
-    switch (_a.label) {
-        case 0: return [4 /*yield*/, (0, Playlist_js_1.fetchPlaylist)(p)];
-        case 1: return [2 /*return*/, _a.sent()];
-    }
-}); }); };
+var Encoder_js_1 = require("../src/Encoder.js");
 var expect = require('chai').expect;
 describe('Playlist format', function () {
-    return __awaiter(this, void 0, void 0, function () {
-        var playlist;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4 /*yield*/, getPlaylist('2023-05 Latin')];
-                case 1:
-                    playlist = _a.sent();
-                    it('1. Type of playlist', function (done) {
-                        expect(playlist.length).to.not.equal(0);
-                        done();
-                    });
-                    it('2. Length of playlist greater than zero', function (done) {
-                        expect(Array.isArray(playlist)).to.equal(true);
-                        done();
-                    });
-                    return [2 /*return*/];
-            }
+    it('1. Playlist not empty and of correct type', function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var p;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, (0, Playlist_js_1.playlist)('2023-05 Latin')];
+                    case 1:
+                        p = _a.sent();
+                        expect(p.length).to.not.equal(0);
+                        expect(Array.isArray(p)).to.equal(true);
+                        return [2 /*return*/];
+                }
+            });
+        });
+    });
+});
+describe('MIDI connections', function () {
+    it('2. All MIDI signals were read and processed', function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var activeSignals, signalSum;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, (0, Encoder_js_1.init)()];
+                    case 1:
+                        activeSignals = _a.sent();
+                        signalSum = Object.values(activeSignals).reduce(function (acc, curr) { return acc && curr; }, false);
+                        expect(signalSum).to.equal(false);
+                        return [2 /*return*/];
+                }
+            });
         });
     });
 });

@@ -17,6 +17,9 @@
 
 import { Input, MidiMessage, Output } from '@julusian/midi'
 
+interface MIDISignals { [key: string]: boolean }
+const ActiveMIDISignals: MIDISignals = {}
+
 const MidiOut = {
     cancelNudgeMasterGain: (): MidiMessage => [0x80, 0, 0],
     cancelNudgeLevel: (deck: number): MidiMessage => [0x81, deck, 0], 
@@ -45,20 +48,20 @@ const MidiOut = {
     nudgeHiEQ: (deck: number, val: number): MidiMessage => [0xb2, deck, val], 
     nudgeMidEQ: (deck: number, val: number): MidiMessage => [0xb3, deck, val], 
     nudgeLoEQ: (deck: number, val: number): MidiMessage => [0xb4, deck, val], 
-    nudgeTempo: (deck: number, val: number): MidiMessage => [0xb5, deck, val], 
+    nudgeTempo: (deck: number, val: number): MidiMessage => [0xb5, deck, val]
 
     // add eq kill methods
 }
 
-const MidiIn = (message: MidiMessage) => {
-    switch (message[0]) {
-        
-    }
+const _statusByte = (message: MidiMessage) => {
+    return message[0]
 }
 
 const setupConnections = (input: Input, output: Output) => {
+    input.openPort(0)
     input.on('message', (deltaTime, message) => {
-        MidiIn(message)
+        const status = _statusByte(message).toString()
+        ActiveMIDISignals[status] = false
     })
     output.openPort(0)
 }
@@ -68,12 +71,27 @@ const closePorts = (input: Input, output: Output) => {
     output.closePort()
 }
 
-const init = async () => {
+export const init = async (): Promise<MIDISignals> => {
     const vIn = new Input()
     const vOut = new Output()
     setupConnections(vIn, vOut)
-    await tests(vOut)
-    closePorts(vIn, vOut)
+    try {
+        await tests(vOut)
+        closePorts(vIn, vOut)
+        return ActiveMIDISignals
+    } catch (e) {
+        console.log(e)
+    }
+    return ActiveMIDISignals
+}
+
+const send = (output: Output, message: MidiMessage) => {
+    const status = _statusByte(message).toString()
+    if (ActiveMIDISignals[status] === true) {
+        throw new Error('MIDI not received by Mixxx')
+    }
+    output.send(message)
+    ActiveMIDISignals[status] = true
 }
 
 const delay = async (ms: number) => {
@@ -81,37 +99,36 @@ const delay = async (ms: number) => {
 }
 
 const tests = async (output: Output): Promise<unknown> => {
-    await delay(2000)
-    output.send(MidiOut.selectPlaylist(1))
-
-    await delay(3000)
-    output.send(MidiOut.selectTrack(0, 14))
+    await delay(1000)
+    send(output, MidiOut.selectPlaylist(1))
 
     await delay(2000)
-    output.send(MidiOut.play(0, 1))
+    send(output, MidiOut.selectTrack(0, 14))
+
+    await delay(1000)
+    send(output, MidiOut.play(0, 1))
     
-    // await delay(3000)
-    // output.send(MidiOut.nudgeMasterGain(0, 0))
+    await delay(1000)
+    send(output, MidiOut.nudgeMasterGain(0, 0))
 
-    // await delay(2000)
-    // output.send(MidiOut.cancelNudgeMasterGain())
+    await delay(1000)
+    send(output, MidiOut.cancelNudgeMasterGain())
 
-    // await delay(3000)
-    // output.send(MidiOut.nudgeMasterGain(0, 1))
+    await delay(1000)
+    send(output, MidiOut.nudgeMasterGain(0, 1))
 
-    // await delay(2000)
-    // output.send(MidiOut.cancelNudgeMasterGain())
+    await delay(1000)
+    send(output, MidiOut.cancelNudgeMasterGain())
 
-    await delay(3000)
-    output.send(MidiOut.nudgeHiEQ(0, 2))
+    await delay(1000)
+    send(output, MidiOut.nudgeHiEQ(0, 2))
 
-    await delay(1500)
-    output.send(MidiOut.nudgeHiEQ(0, 3))
+    await delay(1000)
+    send(output, MidiOut.nudgeHiEQ(0, 3))
 
-    await delay(1500)
-    output.send(MidiOut.cancelNudgeHiEQ(0))
+    await delay(1000)
+    send(output, MidiOut.cancelNudgeHiEQ(0))
 
-    return delay(1000)   
+    await delay(2000)
+    return delay(0)
 }
-
-init()

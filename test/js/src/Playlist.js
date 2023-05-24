@@ -47,7 +47,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     return to.concat(ar || Array.prototype.slice.call(from));
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fetchPlaylist = void 0;
+exports.playlist = void 0;
 var knex_1 = require("knex");
 var knex = (0, knex_1.default)({
     client: 'better-sqlite3',
@@ -74,4 +74,10 @@ var fetchPlaylist = function (playlist) { return __awaiter(void 0, void 0, void 
         }
     });
 }); };
-exports.fetchPlaylist = fetchPlaylist;
+var playlist = function (p) { return __awaiter(void 0, void 0, void 0, function () { return __generator(this, function (_a) {
+    switch (_a.label) {
+        case 0: return [4 /*yield*/, fetchPlaylist(p)];
+        case 1: return [2 /*return*/, _a.sent()];
+    }
+}); }); };
+exports.playlist = playlist;

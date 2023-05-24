@@ -1,15 +1,19 @@
-import { fetchPlaylist } from '../src/Playlist.js'
-const getPlaylist = async (p: string) =>  await fetchPlaylist(p)
+import { playlist } from '../src/Playlist.js'
+import { init } from '../src/Encoder.js'
 
 const expect = require('chai').expect
-describe('Playlist format', async function() {
-    const playlist = await getPlaylist('2023-05 Latin')
-    it('1. Type of playlist', function(done) {
-        expect(playlist.length).to.not.equal(0)
-        done()
+describe('Playlist format', function() {
+    it('1. Playlist not empty and of correct type', async function() {
+        const p = await playlist('2023-05 Latin')
+        expect(p.length).to.not.equal(0)
+        expect(Array.isArray(p)).to.equal(true)
     })
-    it('2. Length of playlist greater than zero', function(done) {
-        expect(Array.isArray(playlist)).to.equal(true)
-        done()
+})
+
+describe('MIDI connections', function() {
+    it('2. All MIDI signals were read and processed', async function() {
+        const activeSignals = await init()
+        const signalSum = Object.values(activeSignals).reduce((acc, curr) => acc && curr, false)
+        expect(signalSum).to.equal(false)
     })
 })
