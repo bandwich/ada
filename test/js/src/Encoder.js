@@ -38,7 +38,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.init = void 0;
+exports.read = exports.closePorts = exports.puts = exports.runSignalTest = exports.MidiOut = void 0;
 /* Actions ---------------------------------------------------
 
     Controllers are invoked by the controller change status byte (1011nnnn) followed by the controller number (0-127) followed
@@ -55,7 +55,8 @@ exports.init = void 0;
 var midi_1 = require("@julusian/midi");
 var MIDISignalsOut = {};
 var MIDISignalsIn = {};
-var MidiOut = {
+exports.MidiOut = {
+    delay: function (ms) { return ms; },
     cancelNudgeMasterGain: function () { return [0x80, 0, 0]; },
     cancelNudgeLevel: function (deck) { return [0x81, deck, 0]; },
     cancelNudgeHiEQ: function (deck) { return [0x82, deck, 0]; },
@@ -80,49 +81,25 @@ var MidiOut = {
     nudgeHiEQ: function (deck, val) { return [0xb2, deck, val]; },
     nudgeMidEQ: function (deck, val) { return [0xb3, deck, val]; },
     nudgeLoEQ: function (deck, val) { return [0xb4, deck, val]; },
-    nudgeTempo: function (deck, val) { return [0xb5, deck, val]; },
+    nudgeTempo: function (deck, val) { return [0xb5, deck, val]; }
     // add eq kill methods
 };
-var _statusByte = function (message) {
-    return message[0];
-};
-var delay = function (ms) { return __awaiter(void 0, void 0, void 0, function () {
-    return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0: return [4 /*yield*/, new Promise(function (resolve) { setTimeout(resolve, ms); })];
-            case 1: return [2 /*return*/, _a.sent()];
-        }
-    });
-}); };
-var setupConnections = function (input, output) {
-    input.openPort(0);
-    input.on('message', function (deltaTime, message) {
-        var status = _statusByte(message).toString();
-        MIDISignalsIn[status] = true;
-        MIDISignalsOut[status] = true;
-    });
-    output.openPort(0);
-};
-var closePorts = function (input, output) {
-    input.closePort();
-    output.closePort();
-};
-var init = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var vIn, vOut, signals, e_1;
+// runs a test of midi signals and checks that they are read by Mixxx
+// simulates runtime environment
+var runSignalTest = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var ps, signals, e_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                vIn = new midi_1.Input();
-                vOut = new midi_1.Output();
-                setupConnections(vIn, vOut);
+                ps = (0, exports.puts)();
                 signals = [];
                 _a.label = 1;
             case 1:
                 _a.trys.push([1, 3, , 4]);
-                return [4 /*yield*/, tests(vOut)];
+                return [4 /*yield*/, _runTests(ps.out)];
             case 2:
                 signals = _a.sent();
-                closePorts(vIn, vOut);
+                (0, exports.closePorts)(ps.in, ps.out);
                 return [3 /*break*/, 4];
             case 3:
                 e_1 = _a.sent();
@@ -132,64 +109,124 @@ var init = function () { return __awaiter(void 0, void 0, void 0, function () {
         }
     });
 }); };
-exports.init = init;
-var send = function (output, message) {
+exports.runSignalTest = runSignalTest;
+var puts = function () { return _setupConnections(new midi_1.Input(), new midi_1.Output()); };
+exports.puts = puts;
+var closePorts = function (input, output) {
+    input.closePort();
+    output.closePort();
+};
+exports.closePorts = closePorts;
+// Separates control flow on message type, outputs message as MIDI (side-effect)
+var read = function (output, messages) { return __awaiter(void 0, void 0, void 0, function () {
+    var _isDelay, _i, messages_1, m;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _isDelay = function (m) { return !Array.isArray(m); };
+                _i = 0, messages_1 = messages;
+                _a.label = 1;
+            case 1:
+                if (!(_i < messages_1.length)) return [3 /*break*/, 5];
+                m = messages_1[_i];
+                if (!_isDelay(m)) return [3 /*break*/, 3];
+                return [4 /*yield*/, _delay(m)];
+            case 2:
+                _a.sent();
+                return [3 /*break*/, 4];
+            case 3:
+                _send(output, m);
+                _a.label = 4;
+            case 4:
+                _i++;
+                return [3 /*break*/, 1];
+            case 5: return [2 /*return*/];
+        }
+    });
+}); };
+exports.read = read;
+/* --------------------------------------------------------------------------------- */
+// handles side-effects from setup
+var _setupConnections = function (input, output) {
+    _openPort(input);
+    _openPort(output);
+    _allowInputRead(input);
+    return { in: input, out: output };
+};
+var _openPort = function (put) { return put.openPort(0); };
+var _allowInputRead = function (input) {
+    input.on('message', function (deltaTime, message) {
+        var status = _statusByte(message).toString();
+        MIDISignalsIn[status] = true;
+        MIDISignalsOut[status] = true;
+    });
+};
+var _statusByte = function (message) { return message[0]; };
+var _delay = function (ms) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, new Promise(function (resolve) { setTimeout(resolve, ms); })];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); };
+var _send = function (output, message) {
     var status = _statusByte(message).toString();
     if (MIDISignalsOut[status] === false) {
         throw new Error('MIDI not received by Mixxx');
     }
     output.send(message);
-    // true on validation
+    // set to true on validation from Mixxx
     MIDISignalsOut[status] = false;
 };
-var tests = function (output) { return __awaiter(void 0, void 0, void 0, function () {
+var _runTests = function (output) { return __awaiter(void 0, void 0, void 0, function () {
     return __generator(this, function (_a) {
         switch (_a.label) {
-            case 0: return [4 /*yield*/, delay(1000)];
+            case 0: return [4 /*yield*/, _delay(1000)];
             case 1:
                 _a.sent();
-                send(output, MidiOut.selectPlaylist(1));
-                return [4 /*yield*/, delay(2000)];
+                _send(output, exports.MidiOut.selectPlaylist(1));
+                return [4 /*yield*/, _delay(2000)];
             case 2:
                 _a.sent();
-                send(output, MidiOut.selectTrack(0, 14));
-                return [4 /*yield*/, delay(1000)];
+                _send(output, exports.MidiOut.selectTrack(0, 14));
+                return [4 /*yield*/, _delay(1000)];
             case 3:
                 _a.sent();
-                send(output, MidiOut.play(0, 1));
-                return [4 /*yield*/, delay(1000)];
+                _send(output, exports.MidiOut.play(0, 1));
+                return [4 /*yield*/, _delay(1000)];
             case 4:
                 _a.sent();
-                send(output, MidiOut.nudgeMasterGain(0, 0));
-                return [4 /*yield*/, delay(1000)];
+                _send(output, exports.MidiOut.nudgeMasterGain(0, 0));
+                return [4 /*yield*/, _delay(1000)];
             case 5:
                 _a.sent();
-                send(output, MidiOut.cancelNudgeMasterGain());
-                return [4 /*yield*/, delay(1000)];
+                _send(output, exports.MidiOut.cancelNudgeMasterGain());
+                return [4 /*yield*/, _delay(1000)];
             case 6:
                 _a.sent();
-                send(output, MidiOut.nudgeMasterGain(0, 1));
-                return [4 /*yield*/, delay(1000)];
+                _send(output, exports.MidiOut.nudgeMasterGain(0, 1));
+                return [4 /*yield*/, _delay(1000)];
             case 7:
                 _a.sent();
-                send(output, MidiOut.cancelNudgeMasterGain());
-                return [4 /*yield*/, delay(1000)];
+                _send(output, exports.MidiOut.cancelNudgeMasterGain());
+                return [4 /*yield*/, _delay(1000)];
             case 8:
                 _a.sent();
-                send(output, MidiOut.nudgeHiEQ(0, 2));
-                return [4 /*yield*/, delay(500)];
+                _send(output, exports.MidiOut.nudgeHiEQ(0, 2));
+                return [4 /*yield*/, _delay(500)];
             case 9:
                 _a.sent();
-                send(output, MidiOut.nudgeHiEQ(0, 3));
-                return [4 /*yield*/, delay(500)];
+                _send(output, exports.MidiOut.nudgeHiEQ(0, 3));
+                return [4 /*yield*/, _delay(500)];
             case 10:
                 _a.sent();
-                send(output, MidiOut.cancelNudgeHiEQ(0));
-                return [4 /*yield*/, delay(1000)];
+                _send(output, exports.MidiOut.cancelNudgeHiEQ(0));
+                return [4 /*yield*/, _delay(1000)];
             case 11:
                 _a.sent();
-                send(output, MidiOut.selectTrack(1, 42));
-                return [4 /*yield*/, delay(500)];
+                _send(output, exports.MidiOut.selectTrack(1, 42));
+                return [4 /*yield*/, _delay(500)];
             case 12:
                 _a.sent();
                 return [2 /*return*/, [MIDISignalsOut, MIDISignalsIn]];

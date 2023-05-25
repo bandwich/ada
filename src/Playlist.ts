@@ -22,7 +22,7 @@ type Track = {
     bpm?: number
     wavesummaryhex?: Blob
 }
-type Playlist = Track[]
+export type Playlist = Track[]
 
 const col = (table: string, column: string) => table.concat('.' + column)
 const playlists = 'playlists'

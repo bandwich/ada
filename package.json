@@ -24,6 +24,7 @@
     "@types/better-sqlite3": "^7.6.4",
     "better-sqlite3": "^8.3.0",
     "dotenv": "^16.0.3",
+    "fp-ts": "^2.15.0",
     "knex": "^2.4.2"
   }
 }

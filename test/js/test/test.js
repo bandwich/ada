@@ -61,14 +61,14 @@ describe('Playlist format', function () {
 describe('MIDI connections', function () {
     it('2. All MIDI signals were read', function () {
         return __awaiter(this, void 0, void 0, function () {
-            var signals, equality;
+            var signals, signalMatch;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, (0, Encoder_js_1.init)()];
+                    case 0: return [4 /*yield*/, (0, Encoder_js_1.runSignalTest)()];
                     case 1:
                         signals = _a.sent();
-                        equality = JSON.stringify(signals[0]) === JSON.stringify(signals[1]);
-                        expect(equality).to.equal(true);
+                        signalMatch = JSON.stringify(signals[0]) === JSON.stringify(signals[1]);
+                        expect(signalMatch).to.equal(true);
                         return [2 /*return*/];
                 }
             });

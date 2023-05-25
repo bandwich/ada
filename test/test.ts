@@ -1,5 +1,5 @@
 import { playlist } from '../src/Playlist.js'
-import { init } from '../src/Encoder.js'
+import { runSignalTest } from '../src/Encoder.js'
 
 import * as dotenv from 'dotenv'
 dotenv.config()
@@ -16,7 +16,7 @@ describe('Playlist format', function() {
 
 describe('MIDI connections', function() {
     it('2. All MIDI signals were read', async function() {
-        const signals = await init()
+        const signals = await runSignalTest()
         const signalMatch = JSON.stringify(signals[0]) === JSON.stringify(signals[1]) 
         expect(signalMatch).to.equal(true)
     })
