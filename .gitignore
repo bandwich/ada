@@ -1,3 +1,5 @@
+**/.env
 **/node_modules
 **/mixxxdb.sqlite
-**/.env
+**/src/js
+**/test/js
