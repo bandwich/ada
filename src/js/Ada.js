@@ -37,7 +37,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var Playlist_js_1 = require("./Playlist.js");
-var Encoder_js_1 = require("./Encoder.js");
+var Transform_js_1 = require("./Transform.js");
 var readline = require('readline').createInterface({
     input: process.stdin,
     output: process.stdout
@@ -45,17 +45,21 @@ var readline = require('readline').createInterface({
 // steps: read in playlist, shuffle it, get begin messages, get output, read the messages
 // easy as pie
 readline.question('Playlist: ', function (name) { return __awaiter(void 0, void 0, void 0, function () {
-    var list, ps;
+    var list, shuffled, ps;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0: return [4 /*yield*/, (0, Playlist_js_1.playlist)(name)];
             case 1:
                 list = _a.sent();
-                ps = (0, Encoder_js_1.puts)();
-                return [4 /*yield*/, (0, Encoder_js_1.read)(ps.out, begin(shuffleList(list)))];
+                shuffled = shuffleList(list);
+                ps = (0, Transform_js_1.puts)();
+                return [4 /*yield*/, (0, Transform_js_1.action)(begin(shuffled))(ps.out)];
             case 2:
                 _a.sent();
-                (0, Encoder_js_1.closePorts)(ps.in, ps.out);
+                return [4 /*yield*/, (0, Transform_js_1.question)(where(0))(ps.in, ps.out)];
+            case 3:
+                _a.sent();
+                (0, Transform_js_1.closePorts)(ps.in, ps.out);
                 readline.close();
                 return [2 /*return*/];
         }
@@ -76,11 +80,16 @@ var shuffleList = function (list) {
 };
 var begin = function (list) {
     return [
-        Encoder_js_1.MidiOut.delay(2000),
-        Encoder_js_1.MidiOut.selectPlaylist(1),
-        Encoder_js_1.MidiOut.delay(2000),
-        Encoder_js_1.MidiOut.selectTrack(0, list[0].position),
-        Encoder_js_1.MidiOut.delay(500),
-        Encoder_js_1.MidiOut.play(0, 1)
+        Transform_js_1.MidiAction.wait(2000),
+        Transform_js_1.MidiAction.selectPlaylist(1),
+        Transform_js_1.MidiAction.wait(2000),
+        Transform_js_1.MidiAction.selectTrack(0, list[0].position),
+        Transform_js_1.MidiAction.wait(500),
+        Transform_js_1.MidiAction.play(0, 1)
     ];
 };
+var loadNext = function (list) {
+    return [];
+};
+var gain = function () { return [Transform_js_1.MidiQ.gain()]; };
+var where = function (deck) { return [Transform_js_1.MidiQ.position(deck)]; };

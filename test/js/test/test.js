@@ -37,38 +37,63 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var Playlist_js_1 = require("../src/Playlist.js");
-var Encoder_js_1 = require("../src/Encoder.js");
+var Transform_js_1 = require("../src/Transform.js");
 var dotenv = require("dotenv");
 dotenv.config();
 var expect = require('chai').expect;
 describe('Playlist format', function () {
     it('1. Playlist not empty and of correct type', function () {
         return __awaiter(this, void 0, void 0, function () {
-            var p;
+            var pList;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, (0, Playlist_js_1.playlist)(process.env.defaultPlaylist)];
                     case 1:
-                        p = _a.sent();
-                        expect(p.length).to.not.equal(0);
-                        expect(Array.isArray(p)).to.equal(true);
+                        pList = _a.sent();
+                        expect(pList.length).to.not.equal(0);
+                        expect(Array.isArray(pList)).to.equal(true);
                         return [2 /*return*/];
                 }
             });
         });
     });
 });
-describe('MIDI connections', function () {
-    it('2. All MIDI signals were read', function () {
+describe('MIDI actions', function () {
+    var ps = (0, Transform_js_1.puts)();
+    it('2. First track in playlist loaded on deck 1', function () {
         return __awaiter(this, void 0, void 0, function () {
-            var signals, signalMatch;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, (0, Encoder_js_1.runSignalTest)()];
+            var testTrackPos, pList, begin, bpm, duration, _a, _b;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
+                    case 0:
+                        testTrackPos = 32;
+                        return [4 /*yield*/, (0, Playlist_js_1.playlist)(process.env.defaultPlaylist)];
                     case 1:
-                        signals = _a.sent();
-                        signalMatch = JSON.stringify(signals[0]) === JSON.stringify(signals[1]);
-                        expect(signalMatch).to.equal(true);
+                        pList = _c.sent();
+                        begin = [
+                            Transform_js_1.MidiAction.wait(2000),
+                            Transform_js_1.MidiAction.selectPlaylist(1),
+                            Transform_js_1.MidiAction.wait(2000),
+                            Transform_js_1.MidiAction.selectTrack(0, testTrackPos)
+                        ];
+                        bpm = [Transform_js_1.MidiQ.bpm(0)];
+                        duration = [Transform_js_1.MidiQ.duration(0)];
+                        return [4 /*yield*/, (0, Transform_js_1.action)(begin)(ps.out)];
+                    case 2:
+                        _c.sent();
+                        return [4 /*yield*/, (0, Transform_js_1.delay)(1000)];
+                    case 3:
+                        _c.sent();
+                        _a = expect;
+                        return [4 /*yield*/, (0, Transform_js_1.question)(bpm)(ps.in, ps.out)];
+                    case 4:
+                        _a.apply(void 0, [(_c.sent())[0]])
+                            .to.be.equal(Math.round(pList[testTrackPos - 1].bpm));
+                        _b = expect;
+                        return [4 /*yield*/, (0, Transform_js_1.question)(duration)(ps.in, ps.out)];
+                    case 5:
+                        _b.apply(void 0, [(_c.sent())[0]])
+                            .to.equal(Math.round(pList[testTrackPos - 1].duration));
                         return [2 /*return*/];
                 }
             });

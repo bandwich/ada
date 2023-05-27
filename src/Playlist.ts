@@ -11,15 +11,15 @@ const knex = knexPkg({
 type Track = {
     track_id: number
     position: number
-    title?: string
-    artist?: string
-    album?: string
-    year?: string
-    genre?: string
-    tracknumber?: string
-    location?: number
-    duration?: number
-    bpm?: number
+    title: string
+    artist: string
+    album: string
+    year: string
+    genre: string
+    tracknumber: string
+    location: number
+    duration: number
+    bpm: number
     wavesummaryhex?: Blob
 }
 export type Playlist = Track[]
