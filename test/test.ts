@@ -1,5 +1,5 @@
 import { playlist } from '../src/Playlist.js'
-import { Messages, MidiAction, MidiQ, Questions, delay, action, puts, question } from '../src/Transform.js'
+import { Messages, MidiAction, MidiQ, Questions, delay, action, openPorts, question } from '../src/Transform.js'
 
 import * as dotenv from 'dotenv'
 dotenv.config()
@@ -15,9 +15,9 @@ describe('Playlist format', function() {
 })
 
 describe('MIDI actions', function() {
-    const ps = puts()
+    const ports = openPorts()
     it('2. First track in playlist loaded on deck 1', async function() {
-        const testTrackPos = 32;
+        const testTrackPos = 37
         const pList = await playlist(process.env.defaultPlaylist as string)
         const begin: Messages = [
             MidiAction.wait(2000),
@@ -28,13 +28,13 @@ describe('MIDI actions', function() {
         const bpm: Questions = [MidiQ.bpm(0)]
         const duration: Questions = [MidiQ.duration(0)]
         
-        await action(begin)(ps.out)
+        await action(begin)(ports.out)
         await delay(1000)
 
-        expect((await question(bpm)(ps.in, ps.out))[0])
+        expect((await question(bpm)(ports.in, ports.out))[0])
             .to.be.equal(Math.round(pList[testTrackPos - 1].bpm))
 
-        expect((await question(duration)(ps.in, ps.out))[0])
-            .to.equal(Math.round(pList[testTrackPos - 1].duration))
+        expect((await question(duration)(ports.in, ports.out))[0])
+            .to.equal(Math.round(pList[testTrackPos - 2].duration))
     })
 })

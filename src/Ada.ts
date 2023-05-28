@@ -1,5 +1,5 @@
 import { Playlist, playlist } from './Playlist.js'
-import { MidiAction, MidiQ, Messages, Questions, puts, question, action, closePorts } from './Transform.js'
+import { MidiAction, MidiQ, Messages, Questions, openPorts, question, action, closePorts } from './Transform.js'
 
 const readline = require('readline').createInterface({
     input: process.stdin,
@@ -11,12 +11,12 @@ const readline = require('readline').createInterface({
 readline.question('Playlist: ', async (name: string) => {
     const list = await playlist(name)
     const shuffled = shuffleList(list)
-    const ps = puts()
+    const ports = openPorts()
     
-    await action(begin(shuffled)) (ps.out)
-    await question(where(0)) (ps.in, ps.out)
+    await action(begin(shuffled)) (ports.out)
+    await question(where(0)) (ports.in, ports.out)
 
-    closePorts(ps.in, ps.out)
+    closePorts(ports.in, ports.out)
     readline.close()
 })
 
