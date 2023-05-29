@@ -1,31 +1,40 @@
+import { Output } from '@julusian/midi'
 import { Playlist, playlist } from './Playlist.js'
-import { MidiAction, MidiQ, Messages, Questions, openPorts, question, action, closePorts } from './Transform.js'
+import * as transform from './Transform.js'
 
 const readline = require('readline').createInterface({
     input: process.stdin,
     output: process.stdout
   })
 
-// steps: read in playlist, shuffle it, get begin messages, get output, read the messages
-// easy as pie
 readline.question('Playlist: ', async (name: string) => {
     const list = await playlist(name)
-    const shuffled = shuffleList(list)
-    const ports = openPorts()
-    
-    await action(begin(shuffled)) (ports.out)
-    await question(where(0)) (ports.in, ports.out)
+    const ports = transform.openPorts()
 
-    closePorts(ports.in, ports.out)
+    await setup(ports.out)
+    await basicPlay(ports.out, list)
+
+    transform.closePorts(ports.in, ports.out)
     readline.close()
 })
 
+const setup = async (out: Output) => await transform.action(init()) (out)
+
+// The most basic player
+// Runs through list of songs in order and simply switches songs at song end
+const basicPlay = async (out: Output, list: Playlist) => {
+    let deck = 1
+    for (let i = 1; i < list.length; i++) {
+        const [nextTrack, activeDuration] = [list[i].position, list[i].duration]
+        await transform.action(playAndWait(deck, nextTrack, activeDuration))(out)
+        deck = nextDeck(deck)
+    }
+}
+
 /* ------------------------------------------------------------- */
 
-type Action = (list: Playlist) => Messages
-
-type DeckQ = (deck: number) => Questions
-type MasterQ = () => Questions
+type DeckQ = (deck: transform.Deck) => transform.Question
+type MasterQ = () => transform.Question
 
 const shuffleList = (list: Playlist): Playlist => {
     // Durstenfeld shuffle (randomize)
@@ -40,24 +49,43 @@ const shuffleList = (list: Playlist): Playlist => {
     return _shuffle(list)
 }
 
-const begin: Action = (list: Playlist): Messages => {
-    return [
-        MidiAction.wait(2000),
-        MidiAction.selectPlaylist(1),
+const init = (): transform.Messages => {
+    return [   
+        transform.MidiAction.wait(2000),
+        transform.MidiAction.selectPlaylist(1),
 
-        MidiAction.wait(2000),
-        MidiAction.selectTrack(0, list[0].position),
-        
-        MidiAction.wait(500),
-        MidiAction.play(0, 1)
+        transform.MidiAction.wait(2000),
+        transform.MidiAction.selectTrack(0, 1),
+
+        transform.MidiAction.wait(500),
+        transform.MidiAction.play(0, 1)
     ]
 }
 
-const loadNext: Action = (list: Playlist): Messages => {
+// Once transitions are more defined, replace and separate pauseOther into its own definition
+const playNext = (deck: transform.Deck): transform.Messages => {
     return [
-        
+        play(deck),
+        pause(nextDeck(deck)),
+        wait(1000)
     ]
 }
 
-const gain: MasterQ = (): Questions => [MidiQ.gain()]
-const where: DeckQ = (deck: number): Questions => [MidiQ.position(deck)]
+const playAndWait = (deck: transform.Deck, nextTrack: number, activeDuration: number) => {
+    return [
+        transform.MidiAction.selectTrack(deck, nextTrack),
+        wait(1000),
+        pause(nextDeck(deck)),
+        play(deck),
+        wait(30000) // or track duration
+
+    ]
+}
+
+const play = (deck: transform.Deck) => transform.MidiAction.play(deck, 1)
+const pause = (deck: transform.Deck) => transform.MidiAction.play(deck, 0)
+const wait = (delay: number) => transform.MidiAction.wait(delay)
+
+const gain: MasterQ = (): transform.Question => transform.MidiQ.gain()
+const where: DeckQ = (deck: number): transform.Question => transform.MidiQ.position(deck)
+const nextDeck = (deck: transform.Deck): transform.Deck => 1 - deck

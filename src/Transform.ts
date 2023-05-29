@@ -8,14 +8,12 @@ type Ports = {in: Input, out: Output}
 
 type Delay = number
 type Message = MidiMessage | Delay
-type Question = MidiMessage
 type Answer = number
 
 export type Messages = Message[]
-export type Questions = Question[]
-export type Answers = Answer[]
+export type Question = MidiMessage
 
-type Deck = number
+export type Deck = number
 
 export const openPorts = (): Ports => _setupConnections(new Input(), new Output())
 export const delay = async (ms: Delay) => {
@@ -30,48 +28,48 @@ export const closePorts = (input: Input, output: Output): void => {
 export const MidiAction = {
     wait: (ms: number): Delay => ms,
     
-    // 0x8: nudges and cancel nudges
-    cancelNudgeMasterGain: (): MidiMessage => [0x80, 0, 0],
-    cancelNudgeLevel: (deck: Deck): MidiMessage => [0x81, deck, 0],
-    cancelNudgeHiEQ: (deck: Deck): MidiMessage => [0x82, deck, 0],
-    cancelNudgeMidEQ: (deck: Deck): MidiMessage => [0x83, deck, 0],
-    cancelNudgeLoEQ: (deck: Deck): MidiMessage => [0x84, deck, 0],
-    cancelNudgeTempo: (deck: Deck): MidiMessage => [0x85, deck, 0],
+    // available for Ada actions: 0x9, 0xa, 0xb: 48 channels
+    // Mixxx sends responses thru 0x8 channels
+    cancelNudgeMasterGain: (): MidiMessage => [0x90, 0, 0],
+    cancelNudgeLevel: (deck: Deck): MidiMessage => [0x91, deck, 0],
+    cancelNudgeHiEQ: (deck: Deck): MidiMessage => [0x92, deck, 0],
+    cancelNudgeMidEQ: (deck: Deck): MidiMessage => [0x93, deck, 0],
+    cancelNudgeLoEQ: (deck: Deck): MidiMessage => [0x94, deck, 0],
+    cancelNudgeTempo: (deck: Deck): MidiMessage => [0x95, deck, 0],
 
     // deck-dependent nudges use val to indicate both direction and size: parity = direction, size = size
-    nudgeVolume: (deck: Deck, val: number): MidiMessage => [0x86, deck, val],
-    nudgeHiEQ: (deck: Deck, val: number): MidiMessage => [0x87, deck, val],
-    nudgeMidEQ: (deck: Deck, val: number): MidiMessage => [0x88, deck, val],
-    nudgeLoEQ: (deck: Deck, val: number): MidiMessage => [0x89, deck, val],
-    nudgeTempo: (deck: Deck, val: number): MidiMessage => [0x8a, deck, val],
-    nudgeMasterGain: (size: number, direction: number): MidiMessage => [0x8b, size, direction],
+    nudgeVolume: (deck: Deck, val: number): MidiMessage => [0x96, deck, val],
+    nudgeHiEQ: (deck: Deck, val: number): MidiMessage => [0x97, deck, val],
+    nudgeMidEQ: (deck: Deck, val: number): MidiMessage => [0x98, deck, val],
+    nudgeLoEQ: (deck: Deck, val: number): MidiMessage => [0x99, deck, val],
+    nudgeTempo: (deck: Deck, val: number): MidiMessage => [0x9a, deck, val],
+    nudgeMasterGain: (size: number, direction: number): MidiMessage => [0x9b, size, direction],
 
-    // 0x9: set value
-    selectPlaylist: (id: number): MidiMessage => [0x90, 0, id],
-    selectTrack: (deck: Deck, id: number): MidiMessage => [0x91, deck, id], // 1-based index (id)
-    adjustJumpSize: (deck: Deck, size: number): MidiMessage => [0x92, deck, size],
-    jumpForward: (deck: Deck, value: number): MidiMessage => [0x93, deck, value],
-    jumpBackward: (deck: Deck, value: number): MidiMessage => [0x94, deck, value],
-    setTempo: (deck: number, val: number): MidiMessage => [0x95, deck, val],
-    adjustLoopLength: (deck: Deck, len: number): MidiMessage => [0x96, deck, len],
-    loop: (deck: Deck, val: number): MidiMessage => [0x97, deck, val],
-    sync: (deck: Deck, val: number): MidiMessage => [0x98, deck, val],
-    play: (deck: Deck, val: number): MidiMessage => [0x99, deck, val],
-    mute: (deck: Deck, val: number): MidiMessage => [0x9a, deck, val],
-    activateHotcue: (deck: Deck, num: number): MidiMessage => [0x9b, deck, num],
-    adjustPosition: (deck: Deck, pos: number): MidiMessage => [0x9c, deck, pos],
+    selectPlaylist: (id: number): MidiMessage => [0xa0, 0, id],
+    selectTrack: (deck: Deck, id: number): MidiMessage => [0xa1, deck, id], // 1-based index (id)
+    adjustJumpSize: (deck: Deck, size: number): MidiMessage => [0xa2, deck, size],
+    jumpForward: (deck: Deck, value: number): MidiMessage => [0xa3, deck, value],
+    jumpBackward: (deck: Deck, value: number): MidiMessage => [0xa4, deck, value],
+    setTempo: (deck: number, val: number): MidiMessage => [0xa5, deck, val],
+    adjustLoopLength: (deck: Deck, len: number): MidiMessage => [0xa6, deck, len],
+    loop: (deck: Deck, val: number): MidiMessage => [0xa7, deck, val],
+    sync: (deck: Deck, val: number): MidiMessage => [0xa8, deck, val],
+    play: (deck: Deck, val: number): MidiMessage => [0xa9, deck, val],
+    mute: (deck: Deck, val: number): MidiMessage => [0xaa, deck, val],
+    activateHotcue: (deck: Deck, num: number): MidiMessage => [0xab, deck, num],
+    adjustPosition: (deck: Deck, pos: number): MidiMessage => [0xac, deck, pos]
 
     // add eq kill methods
 }
 
 export const MidiQ = {
-    // 0x9: polyphonic pressure (value check)
-    gain: (): MidiMessage => [0xa0, 0, 0],
-    loaded: (deck: Deck): MidiMessage => [0xa1, deck, 0],
-    position: (deck: Deck): MidiMessage => [0xa2, deck, 0],
-    volume: (deck: Deck): MidiMessage => [0xa3, deck, 0],
-    bpm: (deck: Deck): MidiMessage => [0xa4, deck, 0],
-    duration: (deck: Deck): MidiMessage => [0xa5, deck, 0],
+    // 0xb: polyphonic pressure (value check)
+    gain: (): MidiMessage => [0xb0, 0, 0],
+    loaded: (deck: Deck): MidiMessage => [0xb1, deck, 0],
+    position: (deck: Deck): MidiMessage => [0xb2, deck, 0],
+    volume: (deck: Deck): MidiMessage => [0xb3, deck, 0],
+    bpm: (deck: Deck): MidiMessage => [0xb4, deck, 0],
+    duration: (deck: Deck): MidiMessage => [0xb5, deck, 0],
 }
 
 // Separates control flow on message type, outputs message as MIDI
@@ -83,21 +81,16 @@ export const action = (ms: Messages) => async (output: Output): Promise<void> =>
     }
 }
 
-export const question = (qs: Questions) => async (input: Input, output: Output): Promise<Answers> => {
-    // imperative style here for ease with async call+response behavior - icky but should hold
-    let answers: Answers = []
-    const pushAnswer = async (q: Question) => {
-        _send(output, q)
-        const answer = await _waitForAnswer(input) as MidiMessage
-        const isValue = _statusByte(answer) === valueAnswerByte
-        const isTime = _statusByte(answer) === timeAnswerByte
+export const question = (q: Question) => async (input: Input, output: Output): Promise<Answer> => {
+    _send(output, q)
+    const answer = await _waitForAnswer(input) as MidiMessage
+    
+    const isValue = _statusByte(answer) === valueAnswerByte
+    const isTime = _statusByte(answer) === timeAnswerByte
 
-        if (isValue) answers.push(_extractSingleVal(answer))
-        else if (isTime) answers.push(_extractTimeVal(answer))
-        else answers.push(-1)
-    }
-    for (let q of qs) await pushAnswer(q)
-    return answers
+    if (isValue) return _extractSingleVal(answer)
+    else if (isTime) return _extractTimeVal(answer)
+    else return -1
 }
 
 /* --------------------------------------------------------------------------------- */
@@ -106,15 +99,14 @@ export const question = (qs: Questions) => async (input: Input, output: Output):
 const _setupConnections = (input: Input, output: Output): Ports => {
     _openPort(input)
     _openPort(output)
-    _allowInputRead(input)
+    _listenForInputs(input)
     return {in: input, out: output}
 }
 
 const _openPort = (put: Input | Output): void => put.openPort(0)
 
 // Emits separate message for Q&A responses
-// mutation is ok here - MIDISignals objects will only ever be modified by input.on and _send, and are used for testing
-const _allowInputRead = (input: Input): void => {
+const _listenForInputs = (input: Input): void => {
     const _isAnswerMessage = (byte: number) => (0xb0 <= byte && byte <= 0xbf)
     input.on('message', (deltaTime, message) => {
         const status = _statusByte(message)
@@ -135,6 +127,4 @@ const _statusByte = (m: MidiMessage): number => m[0]
 const _extractSingleVal = (m: MidiMessage): number => m[1] + m[2]
 const _extractTimeVal = (m: MidiMessage): number => (m[1] * 60) + m[2]
 
-// signals object param can be used for testing, or to log MIDI signals. 
-// can be ignored otherwise, along with return value
 const _send = (output: Output, message: MidiMessage) => output.send(message)

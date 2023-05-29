@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "node": "node src/js/Ada.js",
+    "ada": "node src/js/Ada.js",
     "tsc": "tsc src/*.ts --outDir src/js && tsc test/*.ts --outDir test/js",
     "test": "mocha -t 15000 test/js/test/test.js"
   },
