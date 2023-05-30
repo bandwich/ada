@@ -1,7 +1,12 @@
 import { playlist } from '../src/Playlist.js'
-import { Messages, MidiAction, MidiQ, Question, delay, action, openPorts, question } from '../src/Transform.js'
+import { Delay, Messages, Question } from '../src/types/Types.js'
+import { openPorts } from '../src/MIDI/Connections.js'
+import { MidiAction, MidiQ } from '../src/MIDI/Encodings.js'
+import { action } from '../src/MIDI/Action.js'
+import { question } from '../src/MIDI/Question.js'
 
 import * as dotenv from 'dotenv'
+import { delay } from '../src/Ada.js'
 dotenv.config()
 
 const expect = require('chai').expect

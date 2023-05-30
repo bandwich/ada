@@ -1,40 +1,47 @@
 import { Output } from '@julusian/midi'
 import { Playlist, playlist } from './Playlist.js'
-import * as transform from './Transform.js'
+import * as connection from './MIDI/Connections.js'
+import { Deck, Delay, Messages, Question } from './types/Types.js'
+import { action } from './MIDI/Action.js'
+import { question } from './MIDI/Question.js'
 
+import { MidiAction, MidiQ } from './MIDI/Encodings.js'
+
+// waits a given number of milliseconds
+export const delay = async (ms: Delay) => {
+    return await new Promise((resolve) => { setTimeout(resolve, ms) })
+}
+ 
 const readline = require('readline').createInterface({
     input: process.stdin,
     output: process.stdout
-  })
+})
 
 readline.question('Playlist: ', async (name: string) => {
     const list = await playlist(name)
-    const ports = transform.openPorts()
+    const ports = connection.openPorts()
 
     await setup(ports.out)
-    await basicPlay(ports.out, list)
+    await previewPlay(ports.out, list, 10000)
 
-    transform.closePorts(ports.in, ports.out)
+    connection.closePorts(ports.in, ports.out)
     readline.close()
 })
 
-const setup = async (out: Output) => await transform.action(init()) (out)
+const setup = async (out: Output) => await action(init()) (out)
 
-// The most basic player
-// Runs through list of songs in order and simply switches songs at song end
-const basicPlay = async (out: Output, list: Playlist) => {
-    let deck = 1
-    for (let i = 1; i < list.length; i++) {
+// Runs through list of songs in order and switches songs after a given durationi
+const previewPlay = async (out: Output, list: Playlist, previewLength: number) => {
+    let deck: Deck = 0
+    for (let i = 0; i < list.length; i++) {
         const [nextTrack, activeDuration] = [list[i].position, list[i].duration]
-        await transform.action(playAndWait(deck, nextTrack, activeDuration))(out)
+        await action(playAndWait(deck, nextTrack, activeDuration))(out)
+        await delay(previewLength)
         deck = nextDeck(deck)
     }
 }
 
 /* ------------------------------------------------------------- */
-
-type DeckQ = (deck: transform.Deck) => transform.Question
-type MasterQ = () => transform.Question
 
 const shuffleList = (list: Playlist): Playlist => {
     // Durstenfeld shuffle (randomize)
@@ -49,43 +56,28 @@ const shuffleList = (list: Playlist): Playlist => {
     return _shuffle(list)
 }
 
-const init = (): transform.Messages => {
+const init = (): Messages => {
     return [   
-        transform.MidiAction.wait(2000),
-        transform.MidiAction.selectPlaylist(1),
+        MidiAction.wait(2000),
+        MidiAction.selectPlaylist(1),
 
-        transform.MidiAction.wait(2000),
-        transform.MidiAction.selectTrack(0, 1),
-
-        transform.MidiAction.wait(500),
-        transform.MidiAction.play(0, 1)
+        MidiAction.wait(2000),
     ]
 }
 
-// Once transitions are more defined, replace and separate pauseOther into its own definition
-const playNext = (deck: transform.Deck): transform.Messages => {
+const playAndWait = (deck: Deck, nextTrack: number, activeDuration: number) => {
     return [
-        play(deck),
-        pause(nextDeck(deck)),
-        wait(1000)
-    ]
-}
-
-const playAndWait = (deck: transform.Deck, nextTrack: number, activeDuration: number) => {
-    return [
-        transform.MidiAction.selectTrack(deck, nextTrack),
+        MidiAction.selectTrack(deck, nextTrack),
         wait(1000),
         pause(nextDeck(deck)),
-        play(deck),
-        wait(30000) // or track duration
-
+        play(deck)
     ]
 }
 
-const play = (deck: transform.Deck) => transform.MidiAction.play(deck, 1)
-const pause = (deck: transform.Deck) => transform.MidiAction.play(deck, 0)
-const wait = (delay: number) => transform.MidiAction.wait(delay)
+const play = (deck: Deck) => MidiAction.play(deck, 1)
+const pause = (deck: Deck) => MidiAction.play(deck, 0)
+const wait = (delay: Delay) => MidiAction.wait(delay)
 
-const gain: MasterQ = (): transform.Question => transform.MidiQ.gain()
-const where: DeckQ = (deck: number): transform.Question => transform.MidiQ.position(deck)
-const nextDeck = (deck: transform.Deck): transform.Deck => 1 - deck
+const gain = (): Question => MidiQ.gain()
+const where = (deck: Deck): Question => MidiQ.position(deck)
+const nextDeck = (deck: Deck): Deck => 1 - deck as Deck
