@@ -7,7 +7,7 @@ export const MidiAction = {
     // status bytes available for Ada actions: 0x9, 0xa, 0xb: 48 channels
     // Mixxx sends responses with status byte 0x8
     cancelNudgeMasterGain: (): MidiMessage => [0x90, 0, 0],
-    cancelNudgeLevel: (deck: Deck): MidiMessage => [0x91, deck, 0],
+    cancelNudgeVolume: (deck: Deck): MidiMessage => [0x91, deck, 0],
     cancelNudgeHiEQ: (deck: Deck): MidiMessage => [0x92, deck, 0],
     cancelNudgeMidEQ: (deck: Deck): MidiMessage => [0x93, deck, 0],
     cancelNudgeLoEQ: (deck: Deck): MidiMessage => [0x94, deck, 0],
@@ -25,14 +25,15 @@ export const MidiAction = {
     adjustJumpSize: (deck: Deck, size: number): MidiMessage => [0xa2, deck, size],
     jumpForward: (deck: Deck, value: number): MidiMessage => [0xa3, deck, value],
     jumpBackward: (deck: Deck, value: number): MidiMessage => [0xa4, deck, value],
-    setTempo: (deck: number, val: number): MidiMessage => [0xa5, deck, val],
+    setTempo: (deck: Deck, val: number): MidiMessage => [0xa5, deck, val],
     adjustLoopLength: (deck: Deck, len: number): MidiMessage => [0xa6, deck, len],
     loop: (deck: Deck, val: number): MidiMessage => [0xa7, deck, val],
     sync: (deck: Deck, val: number): MidiMessage => [0xa8, deck, val],
     play: (deck: Deck, val: number): MidiMessage => [0xa9, deck, val],
     mute: (deck: Deck, val: number): MidiMessage => [0xaa, deck, val],
     activateHotcue: (deck: Deck, num: number): MidiMessage => [0xab, deck, num],
-    adjustPosition: (deck: Deck, pos: number): MidiMessage => [0xac, deck, pos]
+    adjustPosition: (deck: Deck, pos: number): MidiMessage => [0xac, deck, pos],
+    setVolume: (deck: Deck, val: number): MidiMessage => [0xad, deck, val]
 }
 
 export const MidiQ = {

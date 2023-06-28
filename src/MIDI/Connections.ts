@@ -2,24 +2,20 @@
 // https://cmtext.indiana.edu/MIDI/chapter3_controller_change.php
 
 import { Input, Output } from '@julusian/midi'
-import { Ports } from '../types/Types'
+import { Port, Ports } from '../types/Types'
 import { isAnswerMessage, statusByte } from './Encodings'
 
-export const openPorts = (): Ports => _setupConnections(new Input(), new Output())
-export const closePorts = (input: Input, output: Output): void => {
-    input.closePort()
-    output.closePort()
+const _setupConnections = (input: Input, output: Output) => {
+    // handles side-effects from connection setup
+    return (inPort: number, outPort: number): Ports => {
+        _openPort(input, inPort)
+        _openPort(output, outPort)
+        _listenForInputs(input)
+        return {in: input, out: output}
+    }
 }
 
-// handles side-effects from setup
-const _setupConnections = (input: Input, output: Output): Ports => {
-    _openPort(input)
-    _openPort(output)
-    _listenForInputs(input)
-    return {in: input, out: output}
-}
-
-const _openPort = (put: Input | Output): void => put.openPort(0)
+const _openPort = (put: Port, portNumber: number): void => put.openPort(portNumber)
 
 // Emits separate message for Q&A responses
 const _listenForInputs = (input: Input): void => {
@@ -29,4 +25,19 @@ const _listenForInputs = (input: Input): void => {
             input.emit('answer', message)
         }
     })
+}
+
+export const getPorts = (portType: Port) => {
+    let names = []
+    for (let x = 0; x < portType.getPortCount(); x++) {
+        names.push(portType.getPortName(x))
+    }
+    return names
+}
+
+// _setupConnections is curried and returns func accepting port numbers
+export const openPorts = () => _setupConnections(new Input(), new Output())
+export const closePorts = (input: Input, output: Output): void => {
+    input.closePort()
+    output.closePort()
 }
