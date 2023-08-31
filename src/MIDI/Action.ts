@@ -4,7 +4,7 @@ import { delay } from "../Ada";
 
 // Separates control flow on message type, outputs message as MIDI
 export const action = (ms: Messages) => async (output: Output): Promise<void> => {
-    const _isDelay = (m: Message) => !Array.isArray(m)
+    const _isDelay = (m: Message) => !Array.isArray(m) // delay is single value
     for (let m of ms) {
         if (_isDelay(m)) await delay(m as Delay)
         else output.send(m as MidiMessage)

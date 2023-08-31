@@ -1,9 +1,11 @@
 // https://github.com/julusian/node-midi
 // https://cmtext.indiana.edu/MIDI/chapter3_controller_change.php
 
-import { Input, Output } from '@julusian/midi'
+import "dotenv/config.js"
+import { Input, MidiMessage, Output } from '@julusian/midi'
 import { Port, Ports } from '../types/Types'
-import { isAnswerMessage, statusByte } from './Encodings'
+import { isMixxxMessage, statusByte } from './Encodings'
+import { addMidiEvent } from '../data'
 
 const _setupConnections = (input: Input, output: Output) => {
     // handles side-effects from connection setup
@@ -18,21 +20,20 @@ const _setupConnections = (input: Input, output: Output) => {
 const _openPort = (put: Port, portNumber: number): void => put.openPort(portNumber)
 
 // Emits separate message for Q&A responses
-const _listenForInputs = (input: Input): void => {
-    input.on('message', (deltaTime, message) => {
+const _listenForInputs = (input: Input) => {
+    input.on('message', async (deltaTime, message) => {
         const status = statusByte(message)
-        if (isAnswerMessage(status)) {
-            input.emit('answer', message)
+        if (isMixxxMessage(status)) {
+            await addMidiEvent(message, performance.now())
+            console.log([...message, performance.now()])
         }
     })
 }
 
 export const getPorts = (portType: Port) => {
-    let names = []
-    for (let x = 0; x < portType.getPortCount(); x++) {
-        names.push(portType.getPortName(x))
-    }
-    return names
+    const count = portType.getPortCount()
+    const portName = (v: any, x: number) => portType.getPortName(x)
+    return Array(count).fill('').map(portName)
 }
 
 // _setupConnections is curried and returns func accepting port numbers

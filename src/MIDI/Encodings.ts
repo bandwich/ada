@@ -4,7 +4,7 @@ import { Deck, Delay } from "../types/Types";
 export const MidiAction = {
     wait: (ms: number): Delay => ms,
     
-    // status bytes available for Ada actions: 0x9, 0xa, 0xb: 48 channels
+    // status bytes available for Ada actions: 0x9, 0xa: 32 channels
     // Mixxx sends responses with status byte 0x8
     cancelNudgeMasterGain: (): MidiMessage => [0x90, 0, 0],
     cancelNudgeVolume: (deck: Deck): MidiMessage => [0x91, deck, 0],
@@ -36,6 +36,11 @@ export const MidiAction = {
     setVolume: (deck: Deck, val: number): MidiMessage => [0xad, deck, val]
 }
 
+// Could we instead use sysex (0xF0) status byte for this? The data would look like [[byte array], byte array length]
+// The type of the requested value can be encoded within the byte array
+// So then Mixxx can send back on 0xb and 0x8
+
+// ALL THIS NEEDS REWRITE !!!!
 export const MidiQ = {
     gain: (): MidiMessage => [0xb0, 0, 0],
     loaded: (deck: Deck): MidiMessage => [0xb1, deck, 0],
@@ -51,4 +56,5 @@ export const timeAnswerStatus = 0x81
 export const statusByte = (m: MidiMessage): number => m[0]
 export const extractSingleVal = (m: MidiMessage): number => m[1] + m[2]
 export const extractTimeVal = (m: MidiMessage): number => (m[1] * 60) + m[2]
-export const isAnswerMessage = (byte: number) => (0x80 <= byte && byte <= 0x8f)
+export const isMixxxMessage = (byte: number) => (0x80 <= byte && byte <= 0x8f)
+export const isBeatMessage = (byte: number) => byte == 0x82

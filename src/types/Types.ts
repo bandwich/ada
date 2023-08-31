@@ -3,6 +3,24 @@ import { Input, MidiMessage, Output } from "@julusian/midi"
 export type Port = Input | Output
 export type Ports = {in: Input, out: Output}
 
+export type Event = {
+    status: number 
+    byte2: number
+    byte3: number
+    time: number
+}
+
+
+export type BeatEvents = {
+    marker: Event
+    events: Event[]
+}
+
+type ProcessedEvent = Event & {relativeTime: number}
+export type ProcessedBeatEvents = BeatEvents & {events: ProcessedEvent[]}
+
+export type FormattedSet = BeatEvents[]
+
 export type Track = {
     track_id: number
     position: number
@@ -23,7 +41,7 @@ export type PlaylistData = {
     position: number
 }
 
-// groups sorted ascending bpm
+// groups sorted by ascending bpm
 export type BPMList = Playlist[]
 
 export type Delay = number

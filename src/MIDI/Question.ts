@@ -1,6 +1,6 @@
 import { Input, MidiMessage, Output } from "@julusian/midi"
 import { Answer, Question } from "../types/Types"
-import { once } from "events"
+import { on, once } from "events"
 import { extractSingleVal, extractTimeVal, statusByte, timeAnswerStatus, valueAnswerStatus } from "./Encodings"
 
 const _parseAnswer = (a: MidiMessage) => {
@@ -11,6 +11,7 @@ const _parseAnswer = (a: MidiMessage) => {
     else if (isTime) return extractTimeVal(a)
     else return -1
 }
+
 
 const _waitForAnswer = async (input: Input) => (await once(input, 'answer')).flat()
 
