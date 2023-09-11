@@ -24,8 +24,8 @@ const _listenForInputs = (input: Input) => {
     input.on('message', async (deltaTime, message) => {
         const status = statusByte(message)
         if (isMixxxMessage(status)) {
-            await addMidiEvent(message, performance.now())
-            console.log([...message, performance.now()])
+            // await addMidiEvent(message, performance.now())
+            // console.log([...message, performance.now()])
         }
     })
 }

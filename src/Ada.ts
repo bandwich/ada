@@ -52,16 +52,15 @@ const readline = createInterface({
 //     lists.map(list => console.log(list.name))
 // }
 
-readline.question('Playlist: ', async (name: string) => {
+const printSet = async () => {
     const set = await processedSet(0)
     set.map((events) => {
         console.log("new bucket at " + events.marker.time)
         events.events.map((e) => console.log(e))
     })
-    // await selectPlaylist(ports.out)
-    // await previewPlay(ports.out, list, 10000)
-    // await test(ports.out)
-    // await delay(10000)
+}
+
+readline.question('Start', async (name: string) => {
     connection.closePorts(ports.in, ports.out)
     readline.close()
 })
@@ -121,7 +120,12 @@ const volumePush = (deck: Deck) => {
 record each event's time
         record each beat's time
         that's all that's needed! everything else can be calculated in post
-        
+        one necessary step: if there's more than one track playing, we should listen only to one tracks' beats
+        Begin by listening to the first track played. That track will send beat messages until its paused, presumably
+        On pause: 
+            - if there's another deck playing, start listening to beat callbacks for that deck.
+            - if not, the following messages shouldn't need to be highly precise, and can be scheduled in relation to the pause
+
         that should be enough info for necessary precision. for playback:
             - check time at beat relative to play, compare with recorded beat times to calibrate
             - schedule all events happening within 2000ms

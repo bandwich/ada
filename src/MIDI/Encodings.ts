@@ -50,6 +50,17 @@ export const MidiQ = {
     duration: (deck: Deck): MidiMessage => [0xb5, deck, 0],
 }
 
+export const MidiLabels = (statusByte: number): string => {
+    switch(statusByte) {
+        case 0x85: return 'volume'
+        case 0x86: return 'EQhigh'
+        case 0x87: return 'EQmid'
+        case 0x88: return 'EQlow'
+        case 0x89: return 'play'
+        default: return 'Unknown'
+    }
+}
+
 export const valueAnswerStatus = 0x80
 export const timeAnswerStatus = 0x81
 
