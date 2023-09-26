@@ -3,6 +3,9 @@ import { Input, MidiMessage, Output } from "@julusian/midi"
 export type Port = Input | Output
 export type Ports = {in: Input, out: Output}
 
+// ListenerActions handle all MIDI related side-effects
+export type ListenerAction = (m: number[]) => void
+
 export type Event = {
     status: number 
     byte2: number
@@ -10,16 +13,21 @@ export type Event = {
     time: number
 }
 
-
-export type BeatEvents = {
-    marker: Event
-    events: Event[]
+export type MidiEvent = {
+    midi: number[]
+    time: number
 }
 
-type ProcessedEvent = Event & {relativeTime: number}
-export type ProcessedBeatEvents = BeatEvents & {events: ProcessedEvent[]}
+export type BeatEvents = {
+    beatMarker: MidiEvent
+    events: MidiEvent[]
+}
 
-export type FormattedSet = BeatEvents[]
+export type ProcessedEvent = MidiEvent & { relativeTime: number }
+export type OutputtedEvent = ProcessedEvent & {delayError: number}
+export type MarkedEvents = BeatEvents & { events: ProcessedEvent[] }
+
+export type FormattedSet = MarkedEvents[]
 
 export type Track = {
     track_id: number
@@ -46,8 +54,7 @@ export type BPMList = Playlist[]
 
 export type Delay = number
 
-export type Message = MidiMessage | Delay
-export type Messages = Message[]
+export type Messages = ProcessedEvent[]
 
 export type Answer = number
 export type Question = MidiMessage

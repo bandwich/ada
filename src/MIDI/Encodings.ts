@@ -6,34 +6,31 @@ export const MidiAction = {
     
     // status bytes available for Ada actions: 0x9, 0xa: 32 channels
     // Mixxx sends responses with status byte 0x8
-    cancelNudgeMasterGain: (): MidiMessage => [0x90, 0, 0],
-    cancelNudgeVolume: (deck: Deck): MidiMessage => [0x91, deck, 0],
-    cancelNudgeHiEQ: (deck: Deck): MidiMessage => [0x92, deck, 0],
-    cancelNudgeMidEQ: (deck: Deck): MidiMessage => [0x93, deck, 0],
-    cancelNudgeLoEQ: (deck: Deck): MidiMessage => [0x94, deck, 0],
-    cancelNudgeTempo: (deck: Deck): MidiMessage => [0x95, deck, 0],
 
-    nudgeVolume: (deck: Deck, val: number): MidiMessage => [0x96, deck, val],
-    nudgeHiEQ: (deck: Deck, val: number): MidiMessage => [0x97, deck, val],
-    nudgeMidEQ: (deck: Deck, val: number): MidiMessage => [0x98, deck, val],
-    nudgeLoEQ: (deck: Deck, val: number): MidiMessage => [0x99, deck, val],
-    nudgeTempo: (deck: Deck, val: number): MidiMessage => [0x9a, deck, val],
-    nudgeMasterGain: (size: number, direction: number): MidiMessage => [0x9b, size, direction],
+    // ANY ACTIONS THAT DON'T NEED BYTE 2 CAN BE STACKED ON ONE CHANNEL! (SOME MASTER ACTIONS)
+    moveVertical: (deck: Deck, val: number): MidiMessage => [0x90, deck, val],
+    selectTrack: (deck: Deck, id: number): MidiMessage => [0x91, deck, id],
+    sync: (deck: Deck, val: number): MidiMessage => [0x92, deck, val],
+    loop: (deck: Deck, val: number): MidiMessage => [0x93, deck, val],
+    adjustLoopLength: (deck: Deck, len: number): MidiMessage => [0x94, deck, len],
+    setVolume: (deck: Deck, val: number): MidiMessage => [0x95, deck, val],
+    setHiEQ: (deck: Deck, val: number): MidiMessage => [0x96, deck, val],
+    setMidEQ: (deck: Deck, val: number): MidiMessage => [0x97, deck, val],
+    setLoEQ: (deck: Deck, val: number): MidiMessage => [0x98, deck, val],
+    setFilter: (deck: Deck, val: number): MidiMessage => [0x99, deck, val],
+    activateHotcue: (deck: Deck, num: number): MidiMessage => [0x9a, deck, num],
+    adjustJumpSize: (deck: Deck, size: number): MidiMessage => [0x9b, deck, size],
+    jumpForward: (deck: Deck, value: number): MidiMessage => [0x9c, deck, value],
+    jumpBackward: (deck: Deck, value: number): MidiMessage => [0x9d, deck, value],
+    setTempo: (deck: Deck, val: number): MidiMessage => [0x9e, deck, val],
 
-    selectPlaylist: (id: number): MidiMessage => [0xa0, 0, id],
-    selectTrack: (deck: Deck, id: number): MidiMessage => [0xa1, deck, id],
-    adjustJumpSize: (deck: Deck, size: number): MidiMessage => [0xa2, deck, size],
-    jumpForward: (deck: Deck, value: number): MidiMessage => [0xa3, deck, value],
-    jumpBackward: (deck: Deck, value: number): MidiMessage => [0xa4, deck, value],
-    setTempo: (deck: Deck, val: number): MidiMessage => [0xa5, deck, val],
-    adjustLoopLength: (deck: Deck, len: number): MidiMessage => [0xa6, deck, len],
-    loop: (deck: Deck, val: number): MidiMessage => [0xa7, deck, val],
-    sync: (deck: Deck, val: number): MidiMessage => [0xa8, deck, val],
-    play: (deck: Deck, val: number): MidiMessage => [0xa9, deck, val],
+    setMasterGain: (val: number): MidiMessage => [0xa0, 0, val],
+    setCrossfader: (val: number): MidiMessage => [0xa1, 0, val],
+    play: (deck: Deck, val: number): MidiMessage => [0xa4, deck, val],
+    
     mute: (deck: Deck, val: number): MidiMessage => [0xaa, deck, val],
-    activateHotcue: (deck: Deck, num: number): MidiMessage => [0xab, deck, num],
+    selectPlaylist: (id: number): MidiMessage => [0xab, 0, id],
     adjustPosition: (deck: Deck, pos: number): MidiMessage => [0xac, deck, pos],
-    setVolume: (deck: Deck, val: number): MidiMessage => [0xad, deck, val]
 }
 
 // Could we instead use sysex (0xF0) status byte for this? The data would look like [[byte array], byte array length]
@@ -52,20 +49,26 @@ export const MidiQ = {
 
 export const MidiLabels = (statusByte: number): string => {
     switch(statusByte) {
-        case 0x85: return 'volume'
-        case 0x86: return 'EQhigh'
-        case 0x87: return 'EQmid'
-        case 0x88: return 'EQlow'
-        case 0x89: return 'play'
-        default: return 'Unknown'
+        case 0x82: return 'beat'
+        case 0x83: return 'loopToggle'
+        case 0x84: return 'loopSize'
+        case 0x85: return 'deckVolume'
+        case 0x86: return 'setHighEQ'
+        case 0x87: return 'setMidEQ'
+        case 0x88: return 'setLoEQ'
+        case 0x89: return 'filter'
+        case 0x8a: return 'hotcue'
+        case 0x8b: return 'jumpSize'
+        case 0x8c: return 'jumpForward'
+        case 0x8d: return 'jumpBackward'
+        case 0x8e: return 'bpm'
+        case 0x8f: return 'play'
+        default: return 'unknown'
     }
 }
 
 export const valueAnswerStatus = 0x80
 export const timeAnswerStatus = 0x81
 
-export const statusByte = (m: MidiMessage): number => m[0]
 export const extractSingleVal = (m: MidiMessage): number => m[1] + m[2]
 export const extractTimeVal = (m: MidiMessage): number => (m[1] * 60) + m[2]
-export const isMixxxMessage = (byte: number) => (0x80 <= byte && byte <= 0x8f)
-export const isBeatMessage = (byte: number) => byte == 0x82

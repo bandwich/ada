@@ -1,12 +1,29 @@
 import { MidiMessage, Output } from "@julusian/midi";
-import { Delay, Message, Messages } from "../types/Types";
-import { delay } from "../Ada";
+import { Delay, Messages, OutputtedEvent } from "../types/Types";
 
-// Separates control flow on message type, outputs message as MIDI
-export const action = (ms: Messages) => async (output: Output): Promise<void> => {
-    const _isDelay = (m: Message) => !Array.isArray(m) // delay is single value
+// Separates control flow on message type, outputs message as MIDIx
+
+const delay = async (ms: Delay) => {
+    return await new Promise((r) => setTimeout(r, ms))
+}
+
+export const action = (ms: Messages) => async (output: Output): Promise<OutputtedEvent[]> => {
+    // interleave a delay after each message
+    let actionsOut: OutputtedEvent[] = []
+    let prevTime = 0;
+
     for (let m of ms) {
-        if (_isDelay(m)) await delay(m as Delay)
-        else output.send(m as MidiMessage)
+        const timeToWait = m.relativeTime - prevTime
+        const timeBefore = performance.now() 
+        await delay(timeToWait)
+        const actualDelay = performance.now() - timeBefore
+    
+        output.send(m.midi as MidiMessage)
+        actionsOut.push({
+            ...m,
+            delayError: actualDelay - timeToWait
+        })
+        prevTime = m.relativeTime
     }
+    return actionsOut
 }

@@ -3,32 +3,10 @@
 
 import "dotenv/config.js"
 import { Input, MidiMessage, Output } from '@julusian/midi'
-import { Port, Ports } from '../types/Types'
-import { isMixxxMessage, statusByte } from './Encodings'
-import { addMidiEvent } from '../data'
-
-const _setupConnections = (input: Input, output: Output) => {
-    // handles side-effects from connection setup
-    return (inPort: number, outPort: number): Ports => {
-        _openPort(input, inPort)
-        _openPort(output, outPort)
-        _listenForInputs(input)
-        return {in: input, out: output}
-    }
-}
-
-const _openPort = (put: Port, portNumber: number): void => put.openPort(portNumber)
-
-// Emits separate message for Q&A responses
-const _listenForInputs = (input: Input) => {
-    input.on('message', async (deltaTime, message) => {
-        const status = statusByte(message)
-        if (isMixxxMessage(status)) {
-            // await addMidiEvent(message, performance.now())
-            // console.log([...message, performance.now()])
-        }
-    })
-}
+import { ListenerAction, Port, Ports } from '../types/Types'
+import { isMidiMessage, statusByte, processedSet, isMarkerMessage, addMidiInEvent, addMidiOutEvents } from "../data"
+import { once } from "events"
+import { action } from "./Action"
 
 export const getPorts = (portType: Port) => {
     const count = portType.getPortCount()
@@ -36,9 +14,67 @@ export const getPorts = (portType: Port) => {
     return Array(count).fill('').map(portName)
 }
 
-// _setupConnections is curried and returns func accepting port numbers
-export const openPorts = () => _setupConnections(new Input(), new Output())
+// openPorts is curried: setupConnections returns func accepting port numbers
+export const openPorts = (mode: string) => setupConnections(new Input(), new Output(), mode)
 export const closePorts = (input: Input, output: Output): void => {
     input.closePort()
     output.closePort()
+}
+
+/* ----------------------------------------------------------------------------------------
+            Setup
+*/
+
+const setupInputConnection = (input: Input, lAction: ListenerAction): void => {
+    const actionCallback = async (deltaTime: number, message: number[]) => lAction(message)
+    input.on('message', actionCallback)   
+}
+
+const setupPlaybackConnection = async (input: Input, output: Output) => {
+    const set = await processedSet(0)
+    let beatNumber = 0;
+    input.on('message', async (deltaTime: number, message: number[]) => {
+        // console.log([...message, performance.now()])
+        if (isMarkerMessage(statusByte(message)) && beatNumber < set.length) {
+            const actionsOut = await action(set[beatNumber].events)(output)
+            addMidiOutEvents(actionsOut)
+            beatNumber += 1
+        }
+    })
+}
+
+const setupConnections = (input: Input, output: Output, mode: string) => {
+    const _openPort = (port: Port, portNumber: number): void => port.openPort(portNumber)
+    
+    // handles side-effects from connection setup
+    return async (inPort: number, outPort: number): Promise<Ports> => {
+        input.ignoreTypes(false, false, false)
+        switch(mode) {
+            case 'playback':
+                setupPlaybackConnection(input, output)
+                break;
+            case 'record': 
+                setupInputConnection(input, record)
+                break;
+            default: setupInputConnection(input, listen)
+        }
+        _openPort(input, inPort)
+        _openPort(output, outPort)
+        return {in: input, out: output}
+    }
+}
+
+// const _waitForAnswer = async (input: Input) => (await once(input, 'answer')).flat()
+
+/* ----------------------------------------------------------------------------------------
+Actions!
+*/
+
+const record: ListenerAction = async (message: number[]) => {
+    if (isMidiMessage(statusByte(message)))
+        addMidiInEvent(message as MidiMessage, performance.now())
+}
+
+const listen: ListenerAction = (message: number[]): void => {
+    console.log([...message, performance.now()])
 }
